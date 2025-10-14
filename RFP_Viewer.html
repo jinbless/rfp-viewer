@@ -130,6 +130,16 @@
         let originalData = [];
         let lockedRequirements = new Set(); // 잠긴 요구사항 인덱스 저장
 
+        // 잠금 상태 복원
+        function restoreLockState(data) {
+            lockedRequirements = new Set();
+            data.forEach((req, index) => {
+                if (req.locked === true) {
+                    lockedRequirements.add(index);
+                }
+            });
+        }
+
         // 데이터 로드
         async function loadDefaultData() {
             try {
@@ -138,6 +148,7 @@
                     const data = await response.json();
                     requirements = data;
                     originalData = JSON.parse(JSON.stringify(data));
+                    restoreLockState(data); // 잠금 상태 복원
                     initializeFilters();
                     renderRequirements();
                 }
@@ -160,11 +171,13 @@
                 const data = await response.json();
                 requirements = data;
                 originalData = JSON.parse(JSON.stringify(data));
-                lockedRequirements = new Set(); // 잠금 초기화
+                restoreLockState(data); // 잠금 상태 복원
                 initializeFilters();
                 renderRequirements();
                 
-                alert(`✅ ${select.options[select.selectedIndex].text} 파일을 성공적으로 불러왔습니다!`);
+                const lockCount = lockedRequirements.size;
+                const lockInfo = lockCount > 0 ? ` (잠금: ${lockCount}개)` : '';
+                alert(`✅ ${select.options[select.selectedIndex].text} 파일을 성공적으로 불러왔습니다!${lockInfo}`);
             } catch (error) {
                 alert('❌ JSON 파일 읽기 실패: ' + error.message);
                 select.value = ''; // 선택 초기화
@@ -186,11 +199,14 @@
                     const data = JSON.parse(event.target.result);
                     requirements = data;
                     originalData = JSON.parse(JSON.stringify(data));
-                    lockedRequirements = new Set(); // 잠금 초기화
+                    restoreLockState(data); // 잠금 상태 복원
                     document.getElementById('jsonFileSelect').value = ''; // 드롭다운 초기화
                     initializeFilters();
                     renderRequirements();
-                    alert('✅ 로컬 JSON 파일을 성공적으로 불러왔습니다!');
+                    
+                    const lockCount = lockedRequirements.size;
+                    const lockInfo = lockCount > 0 ? ` (잠금: ${lockCount}개)` : '';
+                    alert(`✅ 로컬 JSON 파일을 성공적으로 불러왔습니다!${lockInfo}`);
                 } catch (error) {
                     alert('❌ JSON 파일 읽기 실패: ' + error.message);
                 }
@@ -510,12 +526,18 @@
             alert('✅ 새 요구사항이 추가되었습니다!');
         }
 
-        // JSON 저장
+        // JSON 저장 (잠금 상태 포함)
         function exportToJSON() {
             const version = prompt('버전명을 입력하세요 (예: v1.0):', 'v1.0');
             if (!version) return;
 
-            const jsonStr = JSON.stringify(requirements, null, 2);
+            // 잠금 상태를 포함한 데이터 복사
+            const dataWithLock = requirements.map((req, index) => ({
+                ...req,
+                locked: lockedRequirements.has(index)
+            }));
+
+            const jsonStr = JSON.stringify(dataWithLock, null, 2);
             const blob = new Blob([jsonStr], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -523,7 +545,7 @@
             a.download = `${version}_RFP_요구사항_${new Date().toISOString().slice(0, 10)}.json`;
             a.click();
             URL.revokeObjectURL(url);
-            alert('✅ JSON 파일이 저장되었습니다!');
+            alert('✅ JSON 파일이 저장되었습니다! (잠금 상태 포함)');
         }
 
         // Excel 내보내기 (CSV)
