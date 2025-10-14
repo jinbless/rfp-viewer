@@ -22,9 +22,17 @@
                         <h1 class="text-3xl font-bold text-gray-900">RFP 요구사항 뷰어</h1>
                         <p class="text-sm text-gray-600 mt-1">총 <span id="totalCount" class="font-bold text-blue-600">0</span>개 요구사항 | 필터링 결과: <span id="filteredCount" class="font-bold text-green-600">0</span>개 | 잠금: <span id="lockedCount" class="font-bold text-yellow-600">0</span>개</p>
                     </div>
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 flex-wrap">
+                        <select id="jsonFileSelect" onchange="loadSelectedJson()" class="px-4 py-2 bg-white border-2 border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 shadow-sm font-medium">
+                            <option value="">📁 JSON 파일 선택</option>
+                            <option value="RFP_완성본_NFR자동생성.json">RFP 완성본 (NFR 자동생성)</option>
+                            <option value="RFP_완성본_NFR자동생성_fixed.json">RFP 완성본 (수정본)</option>
+                            <option value="RFP_재구조화_결과.json">RFP 재구조화 결과</option>
+                            <option value="v1.1_RFP_요구사항_2025-10-14.json">v1.1 (2025-10-14)</option>
+                            <option value="v1.2_RFP_요구사항_2025-10-14.json">v1.2 (2025-10-14)</option>
+                        </select>
                         <button onclick="loadJsonFile()" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm">
-                            📂 JSON 불러오기
+                            💾 로컬 파일
                         </button>
                         <input id="jsonFileInput" type="file" accept=".json" class="hidden" />
                         <button onclick="addNewRequirement()" class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-sm">
@@ -138,7 +146,32 @@
             }
         }
 
-        // JSON 파일 불러오기
+        // GitHub에서 선택된 JSON 파일 불러오기
+        async function loadSelectedJson() {
+            const select = document.getElementById('jsonFileSelect');
+            const fileName = select.value;
+            
+            if (!fileName) return;
+
+            try {
+                const response = await fetch(fileName);
+                if (!response.ok) throw new Error('파일을 불러올 수 없습니다.');
+                
+                const data = await response.json();
+                requirements = data;
+                originalData = JSON.parse(JSON.stringify(data));
+                lockedRequirements = new Set(); // 잠금 초기화
+                initializeFilters();
+                renderRequirements();
+                
+                alert(`✅ ${select.options[select.selectedIndex].text} 파일을 성공적으로 불러왔습니다!`);
+            } catch (error) {
+                alert('❌ JSON 파일 읽기 실패: ' + error.message);
+                select.value = ''; // 선택 초기화
+            }
+        }
+
+        // 로컬 JSON 파일 불러오기
         function loadJsonFile() {
             document.getElementById('jsonFileInput').click();
         }
@@ -153,9 +186,11 @@
                     const data = JSON.parse(event.target.result);
                     requirements = data;
                     originalData = JSON.parse(JSON.stringify(data));
+                    lockedRequirements = new Set(); // 잠금 초기화
+                    document.getElementById('jsonFileSelect').value = ''; // 드롭다운 초기화
                     initializeFilters();
                     renderRequirements();
-                    alert('✅ JSON 파일을 성공적으로 불러왔습니다!');
+                    alert('✅ 로컬 JSON 파일을 성공적으로 불러왔습니다!');
                 } catch (error) {
                     alert('❌ JSON 파일 읽기 실패: ' + error.message);
                 }
