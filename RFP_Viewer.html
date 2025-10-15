@@ -313,11 +313,11 @@
             });
         }
 
-        // 상위 기능명 가져오기
+        // 상위 요구사항 내용 가져오기
         function getParentFunctionName(req) {
-            // 1순위: JSON에 직접 저장된 '상위기능명' 사용
-            if (req['상위기능명']) {
-                return req['상위기능명'];
+            // 1순위: JSON에 직접 저장된 '상위요구사항내용' 사용
+            if (req['상위요구사항내용']) {
+                return req['상위요구사항내용'];
             }
             
             // 2순위: 상위기능ID로 자동 생성 (하위 호환성)
@@ -326,9 +326,9 @@
             // 상위기능ID로 요구사항 찾기
             const parentReq = requirements.find(r => r['기능ID'] === req['상위기능ID']);
             
-            // 상위 요구사항이 있으면 그 기능명 반환
-            if (parentReq && parentReq['기능명']) {
-                return parentReq['기능명'];
+            // 상위 요구사항이 있으면 그 요구사항내용 반환
+            if (parentReq && parentReq['요구사항내용']) {
+                return parentReq['요구사항내용'];
             }
             
             // 찾지 못하면 빈 값
@@ -469,7 +469,7 @@
 
                             ${getParentFunctionName(req) ? `
                                 <div class="mb-4">
-                                    <span class="text-xs font-semibold text-gray-500 uppercase">상위 기능명</span>
+                                    <span class="text-xs font-semibold text-gray-500 uppercase">상위 요구사항 내용</span>
                                     <p class="text-sm text-gray-700 mt-1">${getParentFunctionName(req)}</p>
                                 </div>
                             ` : ''}
@@ -615,7 +615,7 @@
                 '서비스분야': '',
                 '서비스중분류': '',
                 '기능명': '새 요구사항',
-                '상위기능명': '',
+                '상위요구사항내용': '',
                 '요구사항분류': '기능요구사항(FR)',
                 '요구사항내용': '',
                 '산출정보': '',
@@ -650,7 +650,7 @@
 
         // Excel 내보내기 (CSV)
         function exportToExcel() {
-            const headers = ['기능ID', '상위기능ID', '서비스분야', '서비스중분류', '기능명', '상위기능명',
+            const headers = ['기능ID', '상위기능ID', '서비스분야', '서비스중분류', '기능명', '상위요구사항내용',
                             '요구사항분류', '요구사항내용', '산출정보', '비고'];
 
             const rows = requirements.map(req => headers.map(h => {
