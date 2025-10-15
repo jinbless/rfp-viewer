@@ -99,6 +99,10 @@
                                 <input type="checkbox" id="showOnlyLocked" class="rounded" />
                                 <span>잠긴 항목만 보기</span>
                             </label>
+                            <label class="flex items-center gap-2 text-sm">
+                                <input type="checkbox" id="showOnlyUnlocked" class="rounded" />
+                                <span>안 잠김 항목만 보기</span>
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -305,7 +309,7 @@
                 serviceCategories.map(c => `<option value="${c}">${c}</option>`).join('');
 
             // 필터 이벤트 바인딩
-            ['filterFunctionId', 'filterServiceArea', 'filterServiceCategory', 'filterReqType', 'filterSearch', 'showOnlyAI', 'showOnlyLocked'].forEach(id => {
+            ['filterFunctionId', 'filterServiceArea', 'filterServiceCategory', 'filterReqType', 'filterSearch', 'showOnlyAI', 'showOnlyLocked', 'showOnlyUnlocked'].forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {
                     element.addEventListener(element.type === 'checkbox' ? 'change' : 'input', renderRequirements);
@@ -344,6 +348,7 @@
             const searchText = document.getElementById('filterSearch').value.toLowerCase();
             const showOnlyAI = document.getElementById('showOnlyAI').checked;
             const showOnlyLocked = document.getElementById('showOnlyLocked').checked;
+            const showOnlyUnlocked = document.getElementById('showOnlyUnlocked').checked;
 
             return requirements.filter((req, index) => {
                 if (functionId && !String(req['기능ID']).toLowerCase().includes(functionId)) return false;
@@ -351,7 +356,11 @@
                 if (serviceCategory && req['서비스중분류'] !== serviceCategory) return false;
                 if (reqType && req['요구사항분류'] !== reqType) return false;
                 if (showOnlyAI && req['비고'] !== 'AI 자동 생성') return false;
-                if (showOnlyLocked && !lockedRequirements.has(index)) return false;
+                
+                // 잠금 상태 필터 (둘 다 체크되면 모두 표시)
+                if (showOnlyLocked && !showOnlyUnlocked && !lockedRequirements.has(index)) return false;
+                if (showOnlyUnlocked && !showOnlyLocked && lockedRequirements.has(index)) return false;
+                
                 if (searchText) {
                     const parentFunctionName = getParentFunctionName(req);
                     const searchableText = [
@@ -678,6 +687,7 @@
             document.getElementById('filterSearch').value = '';
             document.getElementById('showOnlyAI').checked = false;
             document.getElementById('showOnlyLocked').checked = false;
+            document.getElementById('showOnlyUnlocked').checked = false;
             renderRequirements();
         }
 
