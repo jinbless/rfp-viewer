@@ -313,6 +313,23 @@
             });
         }
 
+        // 상위 기능명 가져오기
+        function getParentFunctionName(req) {
+            // 상위기능ID가 없으면 빈 값 반환
+            if (!req['상위기능ID']) return '';
+            
+            // 상위기능ID로 요구사항 찾기
+            const parentReq = requirements.find(r => r['기능ID'] === req['상위기능ID']);
+            
+            // 상위 요구사항이 있으면 그 기능명 반환
+            if (parentReq && parentReq['기능명']) {
+                return parentReq['기능명'];
+            }
+            
+            // 찾지 못하면 빈 값
+            return '';
+        }
+
         // 필터링된 요구사항 가져오기
         function getFilteredRequirements() {
             const functionId = document.getElementById('filterFunctionId').value.toLowerCase();
@@ -331,9 +348,10 @@
                 if (showOnlyAI && req['비고'] !== 'AI 자동 생성') return false;
                 if (showOnlyLocked && !lockedRequirements.has(index)) return false;
                 if (searchText) {
+                    const parentFunctionName = getParentFunctionName(req);
                     const searchableText = [
                         req['기능명'],
-                        req['세부기능명'],
+                        parentFunctionName,
                         req['요구사항내용']
                     ].join(' ').toLowerCase();
                     if (!searchableText.includes(searchText)) return false;
@@ -444,10 +462,10 @@
                                 <p class="text-base font-medium text-gray-900 mt-1">${req['기능명'] || '-'}</p>
                             </div>
 
-                            ${req['세부기능명'] ? `
+                            ${getParentFunctionName(req) ? `
                                 <div class="mb-4">
-                                    <span class="text-xs font-semibold text-gray-500 uppercase">세부 기능명</span>
-                                    <p class="text-sm text-gray-700 mt-1">${req['세부기능명']}</p>
+                                    <span class="text-xs font-semibold text-gray-500 uppercase">상위 기능명</span>
+                                    <p class="text-sm text-gray-700 mt-1">${getParentFunctionName(req)}</p>
                                 </div>
                             ` : ''}
 
